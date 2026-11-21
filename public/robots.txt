@@ -1,3 +1,2 @@
-# REMOVE AT DNS FLIP ONLY ON MANAGER ORDER
 User-agent: *
-Disallow: /
+Allow: /
