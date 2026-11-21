@@ -73,6 +73,17 @@ export function parseStates(s: string): (string | null)[] {
   return out
 }
 
+/** Keep at most MAX_TRAVEL_STATES entries of a typed state list; the rest is cut (the UI says so). */
+export function clampStates(raw: string): { text: string } {
+  let text = raw ?? ''
+  while (parseStates(text).length > MAX_TRAVEL_STATES) {
+    const i = Math.max(text.lastIndexOf(','), text.lastIndexOf(';'), text.lastIndexOf('\n'))
+    if (i < 0) break
+    text = text.slice(0, i)
+  }
+  return { text }
+}
+
 export const sfx = (n: number) => (n === 1 ? '' : String(n))
 export const ownerKeys = (n: number) => ({
   name: `ownerName${n}`, title: `ownerTitleRelationship${n}`, dob: `ownerDateOfBirth${sfx(n)}`, duties: `ownerDuties${sfx(n)}`,

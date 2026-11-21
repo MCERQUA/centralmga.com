@@ -3,6 +3,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Central MGA | ACORD applications in plain language',
+  // REMOVE AT DNS FLIP ONLY ON MANAGER ORDER
+  robots: { index: false, follow: false },
   description: 'Answer plain-language questions and watch the matching ACORD 125, 126 and 140 form pages fill in.',
 }
 

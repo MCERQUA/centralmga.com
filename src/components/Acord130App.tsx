@@ -7,7 +7,7 @@ import { computeItems130, widgets130 } from '@/lib/overlay130'
 import { LEADS_WEBHOOK_URL, NETLIFY_FALLBACK, ROUTES, SITE, type RouteKey } from '@/lib/config'
 import {
   FORM_NAME_130, STORAGE_130, STATES, ENTITY_130, TITLES, EL_LIMITS, YN_130, COVER_130, OTHER_DESC_130, INFO_NOTICE_130, INFO_NOTICE_TICK_130, MAX_TRAVEL_STATES, MAXLEN, MAX_OWNERS, MAX_CLASSES, MAX_PRIOR,
-  ownerKeys, classKeys, priorKeys, validate130, buildPayload130, hasAnyAnswer, isSole, money, fmtFein, oneYearAfter, type Flat,
+  ownerKeys, classKeys, priorKeys, clampStates, parseStates, validate130, buildPayload130, hasAnyAnswer, isSole, money, fmtFein, oneYearAfter, type Flat,
 } from '@/lib/acord130Spec'
 
 const CONNECTED = LEADS_WEBHOOK_URL !== ''
@@ -45,7 +45,12 @@ export function Acord130App() {
   const set = useCallback((name: string, val: string) => {
     setStatus('idle')
     setV(prev => {
-      const n = { ...prev, [name]: val }
+      let nv = val
+      if (name === 'travelStates') {
+        // 11th state: keep the first 10. Typing past a full list is refused; a paste is cut to its first 10 (the notice under the field says so).
+        nv = parseStates(val).length > MAX_TRAVEL_STATES && parseStates(prev.travelStates ?? '').length >= MAX_TRAVEL_STATES ? (prev.travelStates ?? '') : clampStates(val).text
+      }
+      const n = { ...prev, [name]: nv }
       if (name === 'physicalState' && (!prev.workStates || prev.workStates === prev.physicalState)) n.workStates = val
       if (name === 'desiredEffectiveDate' && (!prev.desiredExpirationDate || prev.desiredExpirationDate === oneYearAfter(prev.desiredEffectiveDate ?? ''))) n.desiredExpirationDate = oneYearAfter(val)
       return n
@@ -316,7 +321,8 @@ export function Acord130App() {
             <section className="q-sec"><h3 className="q-h">A few yes-or-no questions</h3>
               <p className="q-help">Every question needs an answer. If you pick Yes, add one line of detail.</p>
               {YN_130.map(q => yn(q.key, q.q, q.hint,
-                q.key === 'travelOutOfState' ? <div className="q-detail" style={{ display: 'block' }}>{txt('travelStates', `Which states? (up to ${MAX_TRAVEL_STATES}, separated by commas)`, { req: true, ph: 'NV, UT', help: 'Two-letter codes or full names.' })}</div>
+                q.key === 'travelOutOfState' ? <div className="q-detail" style={{ display: 'block' }}>{txt('travelStates', `Which states? (up to ${MAX_TRAVEL_STATES}, separated by commas)`, { req: true, ph: 'NV, UT', help: 'Two-letter codes or full names.' })}
+                  {parseStates(v.travelStates ?? '').length >= MAX_TRAVEL_STATES && <p className="q-help" role="status" data-testid="travel-states-full">The form has room for {MAX_TRAVEL_STATES} states. List any others in the explanation box above.</p>}</div>
                 : q.key === 'workFromHome' ? <div className="q-detail" style={{ display: 'block' }}>{txt('workFromHomeCount', 'How many employees work from home?', { req: true, fmt: 'digits', ph: '2' })}</div>
                 : undefined))}
             </section>
