@@ -71,6 +71,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
             <Link key={k} href={`/${ROUTES[k].slug}`} className={k === route ? 'on' : ''} aria-current={k === route ? 'page' : undefined}>{ROUTES[k].title}</Link>
           ))}
           <Link href="/acord-130">ACORD 130</Link>
+          <Link href="/acord-131">ACORD 131</Link>
         </nav>
       </header>
       <div className="cols">

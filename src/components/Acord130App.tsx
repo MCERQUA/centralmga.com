@@ -202,6 +202,7 @@ export function Acord130App() {
         <nav aria-label="Applications">
           {(Object.keys(ROUTES) as RouteKey[]).map(k => <Link key={k} href={`/${ROUTES[k].slug}`}>{ROUTES[k].title}</Link>)}
           <Link href="/acord-130" className="on" aria-current="page">ACORD 130</Link>
+          <Link href="/acord-131">ACORD 131</Link>
         </nav>
       </header>
       <div className="cols">
