@@ -8,16 +8,22 @@ import React from 'react'
 export const CONSTRUCTION = ['Frame', 'Joisted Masonry', 'Non-Combustible', 'Masonry Non-Combustible', 'Modified Fire Resistive', 'Fire Resistive']
 export const ROOF = ['Asphalt shingle', 'Metal', 'Tile', 'Wood shake', 'Built-up / flat', 'Single-ply', 'Other']
 export const ALARM_GRADE = ['AA', 'A', 'BB', 'B', 'CC', 'C']
-export const PROTECTION_ALARM_EXTENT = ['Partial', 'Full', 'Perimeter only', 'Interior only']
+export const PROTECTION_ALARM_EXTENT = ['Partial', 'Full', 'Perimeter only', 'Interior only', 'Other']
 export const PROPERTY_INFO = [
   'property_requested', 'construction', 'protectionClass', 'buildingValue', 'contentsValue', 'yearBuilt',
   'historicalProperty', 'openSides', 'storeys', 'basements', 'buildingCodeGrade', 'roofMaterial',
-  'solidFuelHeater', 'solidFuelHeaterInstalled', 'solidFuelHeaterMaker',
+  'roofMaterialOther', 'burglarAlarmExtentOther', 'solidFuelHeater', 'solidFuelHeaterInstalled', 'solidFuelHeaterMaker',
   'burglarAlarmDescription', 'burglarAlarmCertificateId', 'burglarAlarmCertificateExpires', 'burglarAlarmCentralStation',
   'burglarAlarmWithKeys', 'burglarAlarmInstalledBy', 'burglarAlarmExtent', 'burglarAlarmGrade',
 ]
-export const propertyFilter = (info: Record<string, string>) =>
-  info.property_requested === 'Yes' ? info : Object.fromEntries(Object.entries(info).filter(([k]) => k === 'property_requested'))
+// roofMaterialOther / burglarAlarmExtentOther are EMAIL-ONLY follow-ups (no ACORD 140 box is mapped for them); posted only while their 'Other' is selected.
+export const propertyFilter = (info: Record<string, string>) => {
+  if (info.property_requested !== 'Yes') return Object.fromEntries(Object.entries(info).filter(([k]) => k === 'property_requested'))
+  const o = { ...info }
+  if (o.roofMaterial !== 'Other') delete o.roofMaterialOther
+  if (o.burglarAlarmExtent !== 'Other') delete o.burglarAlarmExtentOther
+  return o
+}
 
 type Api = Parameters<NonNullable<React.ComponentProps<typeof import('@/components/quote/QuoteForm').QuoteForm>['extra']>>[0]
 
@@ -68,6 +74,7 @@ export function PropertySection({ v, set, info, setInfo, err, touch, classes: C 
             {text('basements', 'Number of basements')}
             {text('openSides', 'Number of open sides on the structure')}
             {select('roofMaterial', 'Roof material', ROOF)}
+            {i('roofMaterial') === 'Other' && text('roofMaterialOther', 'Describe the roof material (email only, not printed on the form)')}
             {text('buildingCodeGrade', 'Building code effectiveness grade')}
             {yn('historicalProperty', 'Is the building a historical property?')}
           </div>
@@ -88,6 +95,7 @@ export function PropertySection({ v, set, info, setInfo, err, touch, classes: C 
               {text('burglarAlarmCertificateId', 'Alarm certificate number')}
               {text('burglarAlarmCertificateExpires', 'Certificate expiration date', { type: 'date' })}
               {select('burglarAlarmExtent', 'How much of the building is covered', PROTECTION_ALARM_EXTENT)}
+              {i('burglarAlarmExtent') === 'Other' && text('burglarAlarmExtentOther', 'Describe the alarm coverage (email only, not printed on the form)')}
               {select('burglarAlarmGrade', 'Alarm grade', ALARM_GRADE)}
             </div>
             {yn('burglarAlarmCentralStation', 'Does the alarm ring at an alarm company (central station)?')}

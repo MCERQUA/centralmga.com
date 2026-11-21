@@ -76,6 +76,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
       </header>
       <div className="cols">
         <section className="left" onFocusCapture={onFocus} aria-label="Questionnaire">
+          <a className="jump" href="#preview">Jump to the form preview</a>
           <div className="lead">
             <h1>{R.title}: {R.sub}</h1>
             <p>Answer in your own words on this side. The matching page of the real ACORD form fills in on the right as you type.
@@ -111,7 +112,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
             classes={FORM_CLASSES}
           />
         </section>
-        <section className="right" aria-label="ACORD form pages">
+        <section className="right" id="preview" aria-label="ACORD form pages">
           <AcordPane pages={R.pages} page={page} onPage={setPage} items={items} focusField={focus} title={R.title} />
           {hint && <p className="hint" role="status">{hint}</p>}
           <p className="fine">Your typed answers are drawn over the blank form for preview. Signature, signed date and policy number are never filled in here.</p>

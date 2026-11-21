@@ -1,9 +1,9 @@
 // Overlay for /acord-130: mirrors what map_acord130.py (site_to_intake + build) writes for the POSTED payload, at the real PDF widget rects.
 // Verified against the real mapper by scripts/compare130.mjs-style check (see build report): same leaves, same text.
 import map from '../data/acord130-map.json'
-import { YN_130, COVER_130, STATE_NAME, MAX_OWNERS, MAX_CLASSES, MAX_PRIOR, ownerKeys, classKeys, priorKeys, ENTITY_130 } from './acord130Spec'
+import { YN_130, COVER_130, STATE_NAME, MAX_OWNERS, MAX_CLASSES, MAX_PRIOR, MAX_TRAVEL_STATES, ownerKeys, classKeys, priorKeys, ENTITY_130, parseStates } from './acord130Spec'
 
-export type Item = { pdf: string; page: number; rect: number[]; text?: string; check?: boolean }
+export type Item = { pdf: string; page: number; rect: number[]; text?: string; check?: boolean; pending?: boolean }
 const M = map as unknown as { rects: Record<string, { page: number; rect: number[] }[]>; yn: Record<string, string>; expl: Record<string, string> }
 type Kind = 'raw' | 'date' | 'code' | 'statename' | 'yn' | 'inc'
 type Tgt = { leaf: string; kind: Kind; onlyInc?: boolean }
@@ -56,7 +56,14 @@ for (let n = 1; n <= MAX_PRIOR; n++) {
 for (const q of YN_130) { add(`yn_${q.key}`, M.yn[q.key], 'yn'); add(`ynExplain_${q.key}`, M.expl[q.key]) }
 const BOX: Record<string, string> = { wcCoverageUSLH: 'WorkersCompensation_Coverage_USLHIndicator_A[0]', wcCoverageVoluntaryComp: 'WorkersCompensation_Coverage_VoluntaryCompensationIndicator_A[0]',
   wcCoverageForeign: 'WorkersCompensation_Coverage_ForeignCoverageIndicator_A[0]', wcCoverageManagedCare: 'WorkersCompensation_Coverage_ManagedCareOptionIndicator_A[0]',
-  wcDeductibleMedical: 'WorkersCompensation_DeductibleType_MedicalIndicator_A[0]', wcDeductibleIndemnity: 'WorkersCompensation_DeductibleType_IndemnityIndicator_A[0]' }
+  wcDeductibleMedical: 'WorkersCompensation_DeductibleType_MedicalIndicator_A[0]', wcDeductibleIndemnity: 'WorkersCompensation_DeductibleType_IndemnityIndicator_A[0]',
+  wcCoverageOther: 'WorkersCompensation_Coverage_OtherIndicator_A[0]', wcDeductibleOther: 'WorkersCompensation_DeductibleType_OtherIndicator_A[0]',
+  lossRunsAttached: 'WorkersCompensationLineOfBusiness_Attachment_LossRunIndicator_A[0]', informationPracticesNotice: 'Policy_InformationPracticesNoticeIndicator_A[0]' }
+/** Keys posted by the form that the real map_acord130.py (site_to_intake) does NOT yet read (verified by probe, see build report). Drawn with a dotted underline so the preview never claims more than the mapper writes. */
+export const PENDING_130 = new Set(['wcDeductibleOther', 'lossRunsAttached', 'informationPracticesNotice', 'wcCoverageOtherDescription', 'wcDeductibleOtherDescription', 'inspectionContactEmail', 'workFromHomeCount', 'travelStates'])
+const PEND_TEXT: Record<string, string> = { wcCoverageOtherDescription: 'WorkersCompensation_Coverage_OtherDescription_A[0]', wcDeductibleOtherDescription: 'WorkersCompensation_DeductibleType_OtherDescription_A[0]',
+  inspectionContactEmail: 'NamedInsured_InspectionContact_EmailAddress_A[0]', workFromHomeCount: 'WorkersCompensationLineOfBusiness_Question_AtHomeEmployeeCount_A[0]' }
+const travelLeaf = (i: number) => `WorkersCompensation_PartThree_StateOrProvinceCode_${L[i]}[0]`
 void COVER_130; void ENTITY_130
 
 const mdY = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? `${m[2]}/${m[3]}/${m[1]}` : v }
@@ -69,6 +76,8 @@ export function widgets130(name: string): Item[] {
   if (name === 'entityType' || name === 'entityOther') leaves = [...entityLeaves(), 'NamedInsured_LegalEntity_OtherDescription_A[0]']
   else if (name === 'mailingSameAsPhysical') leaves = ['NamedInsured_MailingAddress_LineOne_A[0]']
   else if (BOX[name]) leaves = [BOX[name]]
+  else if (PEND_TEXT[name]) leaves = [PEND_TEXT[name]]
+  else if (name === 'travelStates') leaves = Array.from({ length: MAX_TRAVEL_STATES }, (_, i) => travelLeaf(i))
   else leaves = (T[name] ?? []).map(t => t.leaf)
   return leaves.flatMap(l => rectsOf(l).map(w => ({ pdf: l, page: w.page, rect: w.rect })))
 }
@@ -88,10 +97,16 @@ export function computeItems130(P: Record<string, string>): Item[] {
   for (let n = 1; n <= MAX_OWNERS; n++) { const k = ownerKeys(n); if (Object.values(k).some(x => (P[x] ?? '').trim()) && (P.physicalState ?? '').trim()) text[`WorkersCompensation_Individual_StateOrProvinceCode_${L[n - 1]}[0]`] = P.physicalState.trim() }
   const ent = P.entityType ?? ''
   if (ent) { if (ENT[ent]) chk.add(entLeaf(ENT[ent])); else { chk.add(entLeaf('Other')); text['NamedInsured_LegalEntity_OtherDescription_A[0]'] = ent } }
-  for (const [k, leaf] of Object.entries(BOX)) if ((P[k] ?? '') !== '') chk.add(leaf)
+  const pendingLeaves = new Set<string>()
+  for (const [k, leaf] of Object.entries(BOX)) {
+    const val = P[k] ?? ''
+    if (k === 'lossRunsAttached' ? val === 'Yes' : val !== '') { chk.add(leaf); if (PENDING_130.has(k)) pendingLeaves.add(leaf) }
+  }
+  for (const [k, leaf] of Object.entries(PEND_TEXT)) { const t = (P[k] ?? '').trim(); if (t) { text[leaf] = t; pendingLeaves.add(leaf) } }
+  if ((P.travelStates ?? '').trim()) parseStates(P.travelStates).slice(0, MAX_TRAVEL_STATES).forEach((c, i) => { if (c) { text[travelLeaf(i)] = c; pendingLeaves.add(travelLeaf(i)) } })
   const out: Item[] = []
-  for (const [pdf, t] of Object.entries(text)) if (t) for (const w of rectsOf(pdf)) out.push({ pdf, page: w.page, rect: w.rect, text: t })
-  for (const pdf of chk) for (const w of rectsOf(pdf)) out.push({ pdf, page: w.page, rect: w.rect, check: true })
+  for (const [pdf, t] of Object.entries(text)) if (t) for (const w of rectsOf(pdf)) out.push({ pdf, page: w.page, rect: w.rect, text: t, pending: pendingLeaves.has(pdf) })
+  for (const pdf of chk) for (const w of rectsOf(pdf)) out.push({ pdf, page: w.page, rect: w.rect, check: true, pending: pendingLeaves.has(pdf) })
   return out
 }
 /** Leaf -> text map for the comparison against the real mapper output. */

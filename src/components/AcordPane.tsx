@@ -62,7 +62,7 @@ export function AcordPane(props: {
             {focusW.map((i, n) => <div key={`f${n}`} className="hl" style={box(i.rect, k)} />)}
             {here.map((i, n) => {
               const b = box(i.rect, k); const hpt = i.rect[3] - i.rect[1], wpt = i.rect[2] - i.rect[0]
-              if (i.check) return <div key={`${i.pdf}${n}`} className="ink chk" style={{ ...b, fontSize: Math.max(8, Math.min(hpt, wpt) * 0.95 * k) }} data-pdf={i.pdf}>X</div>
+              if (i.check) return <div key={`${i.pdf}${n}`} className={`ink chk${i.pending ? ' pending' : ''}`} style={{ ...b, fontSize: Math.max(8, Math.min(hpt, wpt) * 0.95 * k) }} data-pdf={i.pdf}>X</div>
               const multi = hpt > 20
               const fs = multi ? 7.2 : Math.max(5, Math.min(hpt * 0.72, (wpt / Math.max(1, (i.text ?? '').length)) * 1.9, 10))
               return <div key={`${i.pdf}${n}`} className={`ink${multi ? ' multi' : ''}${i.pending ? ' pending' : ''}`} style={{ ...b, fontSize: fs * k }} data-pdf={i.pdf}>{i.text}</div>

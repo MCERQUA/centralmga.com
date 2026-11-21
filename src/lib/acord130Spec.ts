@@ -33,7 +33,7 @@ export const YN_130: { key: string; q: string; hint?: string }[] = [
   { key: 'seasonalEmployees', q: 'Do you have any seasonal employees?' },
   { key: 'volunteerLabor', q: 'Do you use any volunteer or donated labor?' },
   { key: 'physicalHandicaps', q: 'Do you have any employees with physical handicaps?' },
-  { key: 'travelOutOfState', q: 'Do your employees travel out of state for work?', hint: 'Which states?' },
+  { key: 'travelOutOfState', q: 'Do your employees travel out of state for work?', hint: 'A little more detail (how long, how often)' },
   { key: 'athleticTeams', q: 'Do you sponsor any athletic teams?' },
   { key: 'physicalsRequired', q: 'Do you require a physical exam after a job offer is made?' },
   { key: 'otherInsuranceSameCarrier', q: 'Do you have any other insurance with the company this policy would be with?' },
@@ -41,7 +41,7 @@ export const YN_130: { key: string; q: string; hint?: string }[] = [
   { key: 'employeeHealthPlan', q: 'Do you provide a health plan for your employees?' },
   { key: 'workForOtherBusinesses', q: 'Do any of your employees also do work for other businesses or subsidiaries?' },
   { key: 'leasedEmployees', q: 'Do you lease employees to or from another employer?' },
-  { key: 'workFromHome', q: 'Do your employees mostly work from home?', hint: 'How many work from home?' },
+  { key: 'workFromHome', q: 'Do your employees mostly work from home?', hint: 'A little more detail (what they do from home)' },
   { key: 'taxLiensBankruptcy', q: 'In the last five years, have you had any tax liens or a bankruptcy?' },
   { key: 'unpaidWcPremium', q: 'Do you (or any business you own or manage with others) owe any undisputed, unpaid workers compensation premium?' },
 ]
@@ -53,7 +53,25 @@ export const COVER_130: { name: string; label: string }[] = [
   { name: 'wcCoverageManagedCare', label: 'Managed care option' },
   { name: 'wcDeductibleMedical', label: 'I want a medical deductible' },
   { name: 'wcDeductibleIndemnity', label: 'I want an indemnity (lost-wages) deductible' },
+  { name: 'wcCoverageOther', label: 'Another coverage option not listed above (you name it)' },
+  { name: 'wcDeductibleOther', label: 'Another kind of deductible not listed above (you name it)' },
 ]
+/** Free-text names for the two "Other" boxes: shown only when the matching box is ticked, required then. Box limits come from FIELDS.md (11 and 13). */
+export const OTHER_DESC_130: Record<string, string> = { wcCoverageOther: 'wcCoverageOtherDescription', wcDeductibleOther: 'wcDeductibleOtherDescription' }
+/** Notice text printed on page 4 of the real ACORD 130 (verbatim, from the form itself). The box beside it is ticked by the applicant, never pre-ticked. */
+export const INFO_NOTICE_130 = 'PERSONAL INFORMATION ABOUT YOU, INCLUDING INFORMATION FROM A CREDIT OR OTHER INVESTIGATIVE REPORT, MAY BE COLLECTED FROM PERSONS OTHER THAN YOU IN CONNECTION WITH THIS APPLICATION FOR INSURANCE AND SUBSEQUENT AMENDMENTS AND RENEWALS. SUCH INFORMATION AS WELL AS OTHER PERSONAL AND PRIVILEGED INFORMATION COLLECTED BY US OR OUR AGENTS MAY IN CERTAIN CIRCUMSTANCES BE DISCLOSED TO THIRD PARTIES WITHOUT YOUR AUTHORIZATION. CREDIT SCORING INFORMATION MAY BE USED TO HELP DETERMINE EITHER YOUR ELIGIBILITY FOR INSURANCE OR THE PREMIUM YOU WILL BE CHARGED. WE MAY USE A THIRD PARTY IN CONNECTION WITH THE DEVELOPMENT OF YOUR SCORE. YOU MAY HAVE THE RIGHT TO REVIEW YOUR PERSONAL INFORMATION IN OUR FILES AND REQUEST CORRECTION OF ANY INACCURACIES. YOU MAY ALSO HAVE THE RIGHT TO REQUEST IN WRITING THAT WE CONSIDER EXTRAORDINARY LIFE CIRCUMSTANCES IN CONNECTION WITH THE DEVELOPMENT OF YOUR CREDIT SCORE. THESE RIGHTS MAY BE LIMITED IN SOME STATES. PLEASE CONTACT YOUR AGENT OR BROKER TO LEARN HOW THESE RIGHTS MAY APPLY IN YOUR STATE OR FOR INSTRUCTIONS ON HOW TO SUBMIT A REQUEST TO US FOR A MORE DETAILED DESCRIPTION OF YOUR RIGHTS AND OUR PRACTICES REGARDING PERSONAL INFORMATION.'
+export const INFO_NOTICE_TICK_130 = 'Copy of the Notice of Information Practices (Privacy) has been given to the applicant. (Not required in all states, contact your agent or broker for your state\'s requirements.)'
+export const MAX_TRAVEL_STATES = 10 // the template has Part Three state boxes A-J only (the mapper letter list goes to N, the PDF does not)
+/** Normalise "nv, Utah  az" -> ['NV','UT','AZ'] (codes or full names); null entry = an unrecognised token. */
+export function parseStates(s: string): (string | null)[] {
+  const byName = Object.fromEntries(Object.entries(STATE_NAME).map(([c, n]) => [n.toLowerCase(), c]))
+  const out: (string | null)[] = []
+  for (const t of (s ?? '').split(/[,;\n]+|\s+and\s+/i).flatMap(x => (/^[A-Za-z]{2}(\s+[A-Za-z]{2})+$/.test(x.trim()) ? x.trim().split(/\s+/) : [x])).map(x => x.trim()).filter(Boolean)) {
+    const c = STATES.includes(t.toUpperCase()) ? t.toUpperCase() : byName[t.toLowerCase()] ?? null
+    if (c === null || !out.includes(c)) out.push(c)
+  }
+  return out
+}
 
 export const sfx = (n: number) => (n === 1 ? '' : String(n))
 export const ownerKeys = (n: number) => ({
@@ -72,7 +90,7 @@ export const MAXLEN: Record<string, number> = {
   businessName: 71, phone: 29, secondaryPhone: 29, email: 72, websiteUrl: 28, yearsInBusiness: 27, sicCode: 6, naicsCode: 8, ncciRiskId: 12, ratingBureauId: 14,
   streetAddress: 49, city: 50, physicalCounty: 29, zip: 11, mailingAddress: 47, mailingCity: 30, mailingZip: 11, operationsDescription: 142, entityOther: 21,
   inspectionContactName: 35, inspectionContactPhone: 26, accountingContactName: 35, accountingContactPhone: 26, claimsContactName: 35, claimsContactPhone: 26,
-  experienceMod: 9, explain: 136,
+  experienceMod: 9, explain: 136, wcCoverageOtherDescription: 11, wcDeductibleOtherDescription: 13, inspectionContactEmail: 44, workFromHomeCount: 6, travelStates: 60,
 }
 for (let n = 1; n <= MAX_OWNERS; n++) { const k = ownerKeys(n); Object.assign(MAXLEN, { [k.name]: 23, [k.title]: 12, [k.pct]: 5, [k.duties]: 29, [k.cls]: 11, [k.pay]: 15, [k.dob]: 10 }) }
 for (let n = 1; n <= MAX_CLASSES; n++) { const k = classKeys(n); Object.assign(MAXLEN, { [k.code]: 11, [k.duties]: 42, [k.ft]: 5, [k.pt]: 5, [k.pay]: 15 }) }
@@ -82,7 +100,7 @@ export const TOP_KEYS = [
   'businessName', 'entityType', 'fein', 'yearsInBusiness', 'phone', 'secondaryPhone', 'email', 'websiteUrl', 'sicCode', 'naicsCode', 'ncciRiskId', 'ratingBureauId',
   'operationsDescription', 'streetAddress', 'city', 'physicalCounty', 'physicalState', 'zip', 'mailingSameAsPhysical', 'mailingAddress', 'mailingCity', 'mailingState', 'mailingZip',
   'desiredEffectiveDate', 'desiredExpirationDate', 'workStates', 'elEachAccident', 'elDiseasePolicy', 'elDiseaseEachEmployee', ...COVER_130.map(c => c.name),
-  'experienceMod', 'inspectionContactName', 'inspectionContactPhone', 'accountingContactName', 'accountingContactPhone', 'claimsContactName', 'claimsContactPhone',
+  'experienceMod', 'inspectionContactName', 'inspectionContactPhone', 'inspectionContactEmail', 'accountingContactName', 'accountingContactPhone', 'claimsContactName', 'claimsContactPhone',
 ]
 /** Every key a submission can carry (posted for Netlify form detection in public/__forms.html). */
 export function allKeys130(): string[] {
@@ -91,6 +109,7 @@ export function allKeys130(): string[] {
   for (let n = 1; n <= MAX_CLASSES; n++) out.push(...vals(classKeys(n)))
   for (let n = 1; n <= MAX_PRIOR; n++) out.push(...vals(priorKeys(n)))
   for (const q of YN_130) out.push(`yn_${q.key}`, `ynExplain_${q.key}`)
+  out.push('travelStates', 'workFromHomeCount', 'lossRunsAttached', 'informationPracticesNotice', ...Object.values(OTHER_DESC_130))
   out.push('name', 'form_name', 'source')
   return [...new Set(out)]
 }
@@ -141,6 +160,8 @@ export function validate130(v: Flat, c: Counts): Record<string, string> {
   need('elEachAccident'); need('elDiseasePolicy'); need('elDiseaseEachEmployee')
   if (need('experienceMod') && !/^\d{1,2}(\.\d{1,3})?$/.test(v.experienceMod.trim())) e.experienceMod = 'A number like 0.95 or 1.00 (1.00 if you are not experience rated).'
   need('inspectionContactName')
+  if ((v.inspectionContactEmail ?? '').trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.inspectionContactEmail.trim())) e.inspectionContactEmail = 'Enter a valid email address.'
+  for (const [box, d] of Object.entries(OTHER_DESC_130)) if (v[box] === 'yes') need(d, 'Name it in a word or two (box fits ' + MAXLEN[d] + ' characters).')
   if (need('inspectionContactPhone') && digits(v.inspectionContactPhone).length < 10) e.inspectionContactPhone = 'Enter a phone number with area code.'
   for (const k of ['accountingContactPhone', 'claimsContactPhone']) if ((v[k] ?? '').trim() && digits(v[k]).length < 10) e[k] = 'Enter a phone number with area code.'
   // owners / officers
@@ -168,6 +189,13 @@ export function validate130(v: Flat, c: Counts): Record<string, string> {
     if (need(k.claims, 'Type 0 if none.') && !int(v[k.claims])) e[k.claims] = 'Whole number (0 if none).'
     if (v[k.mod] && !/^\d{1,2}(\.\d{1,3})?$/.test(v[k.mod].trim())) e[k.mod] = 'A number like 0.95.'
   }
+  if (v.yn_travelOutOfState === 'Yes') {
+    const st = parseStates(v.travelStates ?? '')
+    if (!st.length) e.travelStates = 'List the states, for example NV, UT.'
+    else if (st.includes(null)) e.travelStates = 'Use two-letter state codes or full state names, separated by commas.'
+    else if (st.length > MAX_TRAVEL_STATES) e.travelStates = `The form has room for ${MAX_TRAVEL_STATES} states. Put the rest in the detail line.`
+  }
+  if (v.yn_workFromHome === 'Yes' && need('workFromHomeCount', 'How many employees work from home?') && !int(v.workFromHomeCount)) e.workFromHomeCount = 'Whole number, for example 2.'
   for (const q of YN_130) {
     const a = v[`yn_${q.key}`]
     if (a !== 'Yes' && a !== 'No') e[`yn_${q.key}`] = REQ
@@ -190,6 +218,11 @@ export function buildPayload130(v: Flat, c: Counts, source: string): Record<stri
     P.mailingSameAsPhysical = 'yes'; P.mailingAddress = P.streetAddress; P.mailingCity = P.city; P.mailingState = P.physicalState; P.mailingZip = P.zip
   } else { P.mailingSameAsPhysical = 'no'; for (const k of ['mailingAddress', 'mailingCity', 'mailingState', 'mailingZip']) keep(k) }
   for (const cv of COVER_130) P[cv.name] = v[cv.name] === 'yes' ? 'Yes' : ''
+  for (const [box, d] of Object.entries(OTHER_DESC_130)) P[d] = v[box] === 'yes' ? (v[d] ?? '').trim() : ''
+  P.lossRunsAttached = v.lossRunsAttached === 'Yes' || v.lossRunsAttached === 'No' ? v.lossRunsAttached : ''   // blank is never 'No'
+  P.informationPracticesNotice = v.informationPracticesNotice === 'yes' ? 'Yes' : ''   // only ever the applicant's own tick
+  if (v.yn_travelOutOfState === 'Yes') P.travelStates = parseStates(v.travelStates ?? '').filter(Boolean).join(', ')
+  if (v.yn_workFromHome === 'Yes') P.workFromHomeCount = (v.workFromHomeCount ?? '').trim()
   for (let n = 1; n <= c.owners; n++) { const k = ownerKeys(n); if (n === 1 || started(v, vals(k))) {
     for (const x of vals(k)) keep(x)
     if (v[k.inc] !== 'Included') { P[k.cls] = ''; P[k.pay] = '' }

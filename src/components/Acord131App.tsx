@@ -145,6 +145,7 @@ export function Acord131App() {
       </header>
       <div className="cols">
         <section className="left" onFocusCapture={onFocus} aria-label="Questionnaire">
+          <a className="jump" href="#preview">Jump to the form preview</a>
           <div className="lead">
             <h1>ACORD 131: Umbrella / excess liability application</h1>
             <p>Answer in plain language on this side. The matching page of the real ACORD 131 fills in on the right as you type. Fields marked * are needed to complete the application.
@@ -253,7 +254,7 @@ export function Acord131App() {
             <button type="submit" className="q-btn" disabled={busy}>{busy ? 'Sending...' : 'Request my umbrella quote'}</button>
           </form>
         </section>
-        <section className="right" aria-label="ACORD 131 form pages">
+        <section className="right" id="preview" aria-label="ACORD 131 form pages">
           <AcordPane pages={[1, 2]} page={page} onPage={setPage} items={items} focusField={focus} title="ACORD 131" png={png} widgetsOf={widgets131} totalPages={2} />
           {hint && <p className="hint" role="status">{hint}</p>}
           <p className="fine">Your typed answers are drawn over the blank form for preview. Signature, signed date and policy numbers are never filled in here, and the producer, rating and company blocks stay blank.</p>

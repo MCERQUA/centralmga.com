@@ -6,7 +6,7 @@ import { AcordPane } from '@/components/AcordPane'
 import { computeItems130, widgets130 } from '@/lib/overlay130'
 import { LEADS_WEBHOOK_URL, NETLIFY_FALLBACK, ROUTES, SITE, type RouteKey } from '@/lib/config'
 import {
-  FORM_NAME_130, STORAGE_130, STATES, ENTITY_130, TITLES, EL_LIMITS, YN_130, COVER_130, MAXLEN, MAX_OWNERS, MAX_CLASSES, MAX_PRIOR,
+  FORM_NAME_130, STORAGE_130, STATES, ENTITY_130, TITLES, EL_LIMITS, YN_130, COVER_130, OTHER_DESC_130, INFO_NOTICE_130, INFO_NOTICE_TICK_130, MAX_TRAVEL_STATES, MAXLEN, MAX_OWNERS, MAX_CLASSES, MAX_PRIOR,
   ownerKeys, classKeys, priorKeys, validate130, buildPayload130, hasAnyAnswer, isSole, money, fmtFein, oneYearAfter, type Flat,
 } from '@/lib/acord130Spec'
 
@@ -90,7 +90,7 @@ export function Acord130App() {
   const chk = (name: string, label: string) => (
     <label key={name} className="q-opt"><input type="checkbox" id={`f-${name}`} name={name} checked={(v[name] ?? '') === 'yes'} onChange={e => set(name, e.target.checked ? 'yes' : '')} /> {label}</label>
   )
-  const yn = (key: string, q: string, hintTxt?: string) => {
+  const yn = (key: string, q: string, hintTxt?: string, more?: React.ReactNode) => {
     const n = `yn_${key}`, x = `ynExplain_${key}`
     return (
       <fieldset key={n} className="q-yn" onBlur={() => touch(n)}>
@@ -106,6 +106,7 @@ export function Acord130App() {
             {E(x)}
           </div>
         )}
+        {v[n] === 'Yes' && more}
       </fieldset>
     )
   }
@@ -207,6 +208,7 @@ export function Acord130App() {
       </header>
       <div className="cols">
         <section className="left" onFocusCapture={onFocus} aria-label="Questionnaire">
+          <a className="jump" href="#preview">Jump to the form preview</a>
           <div className="lead">
             <h1>ACORD 130: Workers compensation application</h1>
             <p>Answer in plain language on this side. The matching page of the real ACORD 130 fills in on the right as you type. Fields marked * are needed to complete the application.
@@ -260,6 +262,7 @@ export function Acord130App() {
               <div className="q-grid">
                 {txt('inspectionContactName', 'Who should we call to set up a site visit?', { req: true })}
                 {txt('inspectionContactPhone', 'Their phone', { req: true, type: 'tel' })}
+                {txt('inspectionContactEmail', 'Their email (optional)', { type: 'email' })}
                 {txt('accountingContactName', 'Billing / audit contact (optional)')}{txt('accountingContactPhone', 'Their phone (optional)', { type: 'tel' })}
                 {txt('claimsContactName', 'Claims contact (optional)')}{txt('claimsContactPhone', 'Their phone (optional)', { type: 'tel' })}
               </div>
@@ -278,7 +281,12 @@ export function Acord130App() {
                 {sel('elDiseaseEachEmployee', 'Disease, each employee', EL_LIMITS.map(x => [x, x]), { req: true })}
               </div>
               <fieldset className="q-checks"><legend className="q-legend">Optional extras (tick any that apply)</legend>
-                {COVER_130.map(c => chk(c.name, c.label))}
+                {COVER_130.map(c => (
+                  <React.Fragment key={c.name}>
+                    {chk(c.name, c.label)}
+                    {OTHER_DESC_130[c.name] && v[c.name] === 'yes' && <div className="q-detail" style={{ display: 'block' }}>{txt(OTHER_DESC_130[c.name], `What is it? (${MAXLEN[OTHER_DESC_130[c.name]]} characters max)`, { req: true })}</div>}
+                  </React.Fragment>
+                ))}
               </fieldset>
               <div className="q-grid">
                 {txt('experienceMod', 'Experience modification factor ("mod")', { req: true, help: 'Your current mod from the rating bureau, like 0.95. Not experience rated? Enter 1.00.' })}
@@ -296,18 +304,34 @@ export function Acord130App() {
             <section className="q-sec"><h3 className="q-h">Past coverage and claims</h3>
               <p className="q-help">Workers comp policies you have had, newest first. Claim-free years need zeros typed in; blank is read as unanswered.</p>
               {rows(0, counts.prior, 'prior', MAX_PRIOR, priorRow, 'Add an earlier policy year')}
+              <fieldset className="q-yn" onBlur={() => touch('lossRunsAttached')}>
+                <legend className="q-legend">Will you attach loss runs (your insurance company's claim history reports) with this application?</legend>
+                <div className="q-yn-row">
+                  {['Yes', 'No'].map(a => <label key={a} className="q-opt"><input type="radio" name="lossRunsAttached" id={a === 'Yes' ? 'f-lossRunsAttached' : undefined} value={a} checked={v.lossRunsAttached === a} onChange={() => set('lossRunsAttached', a)} /> {a}</label>)}
+                </div>
+                <p className="q-help">Optional. Leave blank if you are not sure; blank is not read as No.</p>
+              </fieldset>
             </section>
 
             <section className="q-sec"><h3 className="q-h">A few yes-or-no questions</h3>
               <p className="q-help">Every question needs an answer. If you pick Yes, add one line of detail.</p>
-              {YN_130.map(q => yn(q.key, q.q, q.hint))}
+              {YN_130.map(q => yn(q.key, q.q, q.hint,
+                q.key === 'travelOutOfState' ? <div className="q-detail" style={{ display: 'block' }}>{txt('travelStates', `Which states? (up to ${MAX_TRAVEL_STATES}, separated by commas)`, { req: true, ph: 'NV, UT', help: 'Two-letter codes or full names.' })}</div>
+                : q.key === 'workFromHome' ? <div className="q-detail" style={{ display: 'block' }}>{txt('workFromHomeCount', 'How many employees work from home?', { req: true, fmt: 'digits', ph: '2' })}</div>
+                : undefined))}
+            </section>
+
+            <section className="q-sec"><h3 className="q-h">Privacy notice</h3>
+              <div className="q-notice" tabIndex={0} role="region" aria-label="Notice of Information Practices (Privacy), printed on page 4 of the form">{INFO_NOTICE_130}</div>
+              <label className="q-opt q-notice-tick"><input type="checkbox" id="f-informationPracticesNotice" name="informationPracticesNotice" checked={v.informationPracticesNotice === 'yes'} onChange={e => set('informationPracticesNotice', e.target.checked ? 'yes' : '')} /> {INFO_NOTICE_TICK_130}</label>
+              <p className="q-help">Optional. Tick it only if you have read the notice above. It is never ticked for you.</p>
             </section>
 
             {status !== 'idle' && <p className={status === 'ok' ? 'q-ok' : 'q-bad'} role="status" data-testid="submit-status">{message}</p>}
             <button type="submit" className="q-btn" disabled={busy}>{busy ? 'Sending...' : 'Request my workers comp quote'}</button>
           </form>
         </section>
-        <section className="right" aria-label="ACORD 130 form pages">
+        <section className="right" id="preview" aria-label="ACORD 130 form pages">
           <AcordPane pages={[1, 4]} page={page} onPage={setPage} items={items} focusField={focus} title="ACORD 130" png={png} widgetsOf={widgets130} totalPages={4} />
           {hint && <p className="hint" role="status">{hint}</p>}
           <p className="fine">Your typed answers are drawn over the blank form for preview. Signature, signed date, initials and policy numbers are never filled in here, and the agency, carrier and rating blocks stay blank.</p>
