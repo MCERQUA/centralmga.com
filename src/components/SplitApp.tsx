@@ -70,6 +70,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
           {(Object.keys(ROUTES) as RouteKey[]).map(k => (
             <Link key={k} href={`/${ROUTES[k].slug}`} className={k === route ? 'on' : ''} aria-current={k === route ? 'page' : undefined}>{ROUTES[k].title}</Link>
           ))}
+          <Link href="/acord-130">ACORD 130</Link>
         </nav>
       </header>
       <div className="cols">

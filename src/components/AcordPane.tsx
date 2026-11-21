@@ -13,8 +13,12 @@ export function AcordPane(props: {
   items: Item[]
   focusField: string
   title: string
+  png?: (n: number) => string          // page picture url (default: 125/126/140 set)
+  widgetsOf?: (field: string) => Item[]   // focus highlight source (default: 125/126/140 rules)
+  totalPages?: number                      // pages in the source PDF (default 11)
 }) {
   const { pages, page, onPage, items, focusField } = props
+  const png = props.png ?? PNG_PATTERN, widgetsOf = props.widgetsOf ?? widgetsFor, totalPages = props.totalPages ?? 11
   const wrap = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(560)
   const [err, setErr] = useState('')
@@ -29,7 +33,7 @@ export function AcordPane(props: {
 
   const k = w / PW
   const here = useMemo(() => items.filter(i => i.page === page), [items, page])
-  const focusW = useMemo(() => (focusField ? widgetsFor(focusField).filter(i => i.page === page) : []), [focusField, page])
+  const focusW = useMemo(() => (focusField ? widgetsOf(focusField).filter(i => i.page === page) : []), [focusField, page])
   const pill = (n: number) => {
     const c = items.filter(i => i.page === n).length
     return (
@@ -43,7 +47,7 @@ export function AcordPane(props: {
   return (
     <div className="pane" data-testid="acord-pane">
       <div className="pane-bar">
-        <div className="pane-title">{props.title}<small> , page {page - pages[0] + 1} of {nums.length} (PDF page {page} of 11)</small></div>
+        <div className="pane-title">{props.title}<small> , page {page - pages[0] + 1} of {nums.length} (PDF page {page} of {totalPages})</small></div>
         <div className="pgs" role="group" aria-label="ACORD page switcher">
           <button type="button" className="nav" disabled={page <= pages[0]} onClick={() => onPage(page - 1)} aria-label="Previous page">Prev</button>
           {nums.map(pill)}
@@ -52,7 +56,7 @@ export function AcordPane(props: {
       </div>
       <div className="sheet" ref={wrap}>
         <div className="paper" style={{ width: w, height: Math.round(w * PH / PW) }}>
-          <img src={PNG_PATTERN(page)} alt={`ACORD form page ${page}`} width={w} height={Math.round(w * PH / PW)} data-testid="page-img" onError={() => setErr(`page image ${page} missing`)} />
+          <img src={png(page)} alt={`ACORD form page ${page}`} width={w} height={Math.round(w * PH / PW)} data-testid="page-img" onError={() => setErr(`page image ${page} missing`)} />
           {err && <div className="loading bad">Could not load the page: {err}</div>}
           <div className="ov" aria-hidden>
             {focusW.map((i, n) => <div key={`f${n}`} className="hl" style={box(i.rect, k)} />)}
