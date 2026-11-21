@@ -6,7 +6,8 @@
 import React from 'react'
 
 export const CONSTRUCTION = ['Frame', 'Joisted Masonry', 'Non-Combustible', 'Masonry Non-Combustible', 'Modified Fire Resistive', 'Fire Resistive']
-export const ROOF = ['Asphalt shingle', 'Metal', 'Tile', 'Wood shake', 'Built-up / flat', 'Single-ply membrane', 'Other']
+export const ROOF = ['Asphalt shingle', 'Metal', 'Tile', 'Wood shake', 'Built-up / flat', 'Single-ply', 'Other']
+export const ALARM_GRADE = ['AA', 'A', 'BB', 'B', 'CC', 'C']
 export const PROTECTION_ALARM_EXTENT = ['Partial', 'Full', 'Perimeter only', 'Interior only']
 export const PROPERTY_INFO = [
   'property_requested', 'construction', 'protectionClass', 'buildingValue', 'contentsValue', 'yearBuilt',
@@ -87,7 +88,7 @@ export function PropertySection({ v, set, info, setInfo, err, touch, classes: C 
               {text('burglarAlarmCertificateId', 'Alarm certificate number')}
               {text('burglarAlarmCertificateExpires', 'Certificate expiration date', { type: 'date' })}
               {select('burglarAlarmExtent', 'How much of the building is covered', PROTECTION_ALARM_EXTENT)}
-              {text('burglarAlarmGrade', 'Alarm grade')}
+              {select('burglarAlarmGrade', 'Alarm grade', ALARM_GRADE)}
             </div>
             {yn('burglarAlarmCentralStation', 'Does the alarm ring at an alarm company (central station)?')}
             {yn('burglarAlarmWithKeys', 'Does the alarm company hold keys?')}
