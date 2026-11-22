@@ -133,7 +133,7 @@ export function oneYearAfter(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return ''
   return `${Number(m[1]) + 1}-${m[2]}-${m[2] === '02' && m[3] === '29' ? '28' : m[3]}`
 }
-const validIso = (s: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getMonth() === +m[2] - 1 && +m[1] > 2000 && +m[1] < 2100 }
+const validIso = (s: string, minYear = 2000) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getMonth() === +m[2] - 1 && +m[1] > minYear && +m[1] < 2100 }
 const int = (s: string) => /^\d+$/.test((s ?? '').trim())
 const moneyOk = (s: string) => /^\d+(\.\d{1,2})?$/.test((s ?? '').replace(/[$,\s]/g, ''))
 const started = (v: Flat, keys: string[]) => keys.some(k => (v[k] ?? '').trim() !== '')
@@ -181,7 +181,7 @@ export function validate130(v: Flat, c: Counts): Record<string, string> {
     if (!on) continue
     need(k.name); need(k.title); need(k.duties); need(k.inc, 'Choose included or excluded.')
     if (need(k.pct)) { const p = Number(v[k.pct]); if (!/^\d{1,3}(\.\d)?$/.test(v[k.pct].trim()) || p > 100) e[k.pct] = '0 to 100.' }
-    if (v[k.dob] && !validIso(v[k.dob])) e[k.dob] = 'Pick a valid date.'
+    if (v[k.dob] && !validIso(v[k.dob], 1900)) e[k.dob] = 'Pick a valid date.'
     if (v[k.inc] === 'Included') { need(k.cls, 'Class code needed for an included owner.'); if (need(k.pay, 'Annual pay needed for an included owner.') && !moneyOk(v[k.pay])) e[k.pay] = 'Dollars, for example $60,000.' }
   }
   // payroll classes
