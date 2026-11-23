@@ -364,6 +364,8 @@ export function QuoteForm(props: QuoteFormProps) {
         {area('businessDescription', 'Description of operations')}
         <div className={C.grid}>
           {select('tradeType', 'Trade / class of business', opts.tradeTypeOptions)}
+          {text('sicCode', 'SIC code (optional, leave blank, your agent assigns it)', { required: false, ph: 'leave blank' })}
+          {text('naicsCode', 'NAICS code (optional, leave blank, your agent assigns it)', { required: false, ph: 'leave blank' })}
           {text('statesOfOperation', 'States where you work', { ph: 'e.g. AZ, NV' })}
           {text('lastGrossSales', 'Annual gross sales / revenue (numbers only)')}
           {text('fullTimeEmployees', 'Full-time employees')}{text('partTimeEmployees', 'Part-time employees')}

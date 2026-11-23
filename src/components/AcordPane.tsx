@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { PNG_PATTERN } from '@/lib/config'
 import { widgetsFor, type Item } from '@/lib/overlay'
+import { savePdf } from '@/lib/savePdf'
 
 const PW = 612, PH = 792
 
@@ -22,6 +23,7 @@ export function AcordPane(props: {
   const wrap = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(560)
   const [err, setErr] = useState('')
+  const [saving, setSaving] = useState<'' | 'busy' | 'ok' | 'bad'>('')
   useEffect(() => { setErr('') }, [page])
 
   useEffect(() => {
@@ -43,6 +45,10 @@ export function AcordPane(props: {
     )
   }
   const nums: number[] = []; for (let n = pages[0]; n <= pages[1]; n++) nums.push(n)
+  const onSave = async () => {
+    setSaving('busy')
+    try { await savePdf(`${props.title.replace(/\s+/g, '-').toLowerCase()}-completed.pdf`, nums, png, items); setSaving('ok') } catch { setSaving('bad') }
+  }
 
   return (
     <div className="pane" data-testid="acord-pane">
@@ -53,6 +59,14 @@ export function AcordPane(props: {
           {nums.map(pill)}
           <button type="button" className="nav" disabled={page >= pages[1]} onClick={() => onPage(page + 1)} aria-label="Next page">Next</button>
         </div>
+      </div>
+      <div className="savebar">
+        <button type="button" className="q-btn save-pdf" data-testid="save-pdf" onClick={onSave} disabled={saving === 'busy'}>
+          {saving === 'busy' ? 'Preparing your PDF...' : `Save completed ${props.title} as PDF`}
+        </button>
+        <span className="fine" role="status" data-testid="save-status">
+          {saving === 'ok' ? 'Saved to your downloads.' : saving === 'bad' ? 'Could not build the PDF in this browser.' : 'Built in your browser. Nothing is uploaded or sent.'}
+        </span>
       </div>
       <div className="sheet" ref={wrap}>
         <div className="paper" style={{ width: w, height: Math.round(w * PH / PW) }}>

@@ -25,23 +25,57 @@ export function SplitApp({ route }: { route: RouteKey }) {
   const [focus, setFocus] = useState('')
   const [hint, setHint] = useState('')
   const loaded = useRef(false)
+  const lastName = useRef('')   // last business name seen in this page's form
+  const extName = useRef('')    // last name that arrived from another page (not typed here)
+  const nameEdited = useRef(false) // 126 only: the user typed their own name here, so never overwrite it
+  const chan = useRef<BroadcastChannel | null>(null)
+  const latest = useRef<Flat>({})
 
   // carry answers across the three routes (tab-scoped sessionStorage; cleared when the tab closes or after a successful send)
   useEffect(() => {
     try {
       const s = sessionStorage.getItem(STORAGE_KEY)
-      if (s) { const d = JSON.parse(s) as Flat; setRestore(r => ({ key: r.key + 1, defaults: d })); setVals(d) }
+      if (s) { const d = JSON.parse(s) as Flat; extName.current = lastName.current = d.businessName ?? ''; setRestore(r => ({ key: r.key + 1, defaults: d })); setVals(d) }
     } catch { /* storage unavailable: still works, answers just do not carry */ }
     loaded.current = true
   }, [])
   const onValues = useCallback((v: Flat) => {
     setVals(v)
+    // live applicant name: the 125 announces its business name; the 126 (below) adopts it unless the user typed their own here
+    if (loaded.current) {
+      const nm = v.businessName ?? ''
+      if (nm !== lastName.current) {
+        if (nm !== extName.current) { if (route === '126') nameEdited.current = true; try { chan.current?.postMessage({ businessName: nm }) } catch { /* ignore */ } }
+        lastName.current = nm
+      }
+    }
     if (!loaded.current) return
     try {
       const keep = Object.fromEntries(Object.entries(v).filter(([, x]) => x !== '' && x !== undefined))
       if (Object.keys(keep).length > 1) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(keep)); else sessionStorage.removeItem(STORAGE_KEY)
     } catch { /* ignore */ }
-  }, [])
+  }, [route])
+  useEffect(() => { latest.current = vals }, [vals])
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return
+    const ch = new BroadcastChannel('cmga-acord-name'); chan.current = ch
+    let pending: string | null = null
+    const apply = () => {
+      if (pending === null || route !== '126' || nameEdited.current) { if (route !== '126' || nameEdited.current) pending = null; return }
+      const a = document.activeElement as HTMLElement | null
+      if (a && a.closest('.left') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return // never remount under the user's cursor; retried on blur/focus
+      const nm = pending; pending = null
+      if (nm === (latest.current.businessName ?? '')) return
+      extName.current = nm; lastName.current = nm
+      const d = { ...latest.current, businessName: nm }
+      setRestore(r => ({ key: r.key + 1, defaults: d })); setVals(d)
+    }
+    ch.onmessage = e => { if (typeof e.data?.businessName === 'string') { pending = e.data.businessName; apply() } }
+    const again = () => apply()
+    const later = () => { setTimeout(apply, 60) }
+    window.addEventListener('focus', again); document.addEventListener('visibilitychange', again); window.addEventListener('pageshow', again); document.addEventListener('focusout', later)
+    return () => { ch.close(); chan.current = null; window.removeEventListener('focus', again); document.removeEventListener('visibilitychange', again); window.removeEventListener('pageshow', again); document.removeEventListener('focusout', later) }
+  }, [route])
   useEffect(() => { setPage(R.pages[0]) }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = useMemo(() => computeItems(vals), [vals])

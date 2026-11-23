@@ -244,7 +244,7 @@ export function Acord130App() {
               </div>
               <details className="q-more"><summary>Codes you may know (optional)</summary>
                 <div className="q-grid">
-                  {txt('sicCode', 'SIC code')}{txt('naicsCode', 'NAICS code')}{txt('ncciRiskId', 'NCCI risk ID')}{txt('ratingBureauId', 'State rating bureau ID')}
+                  {txt('sicCode', 'SIC code (optional, leave blank, your agent assigns it)')}{txt('naicsCode', 'NAICS code (optional, leave blank, your agent assigns it)')}{txt('ncciRiskId', 'NCCI risk ID')}{txt('ratingBureauId', 'State rating bureau ID')}
                 </div>
               </details>
             </section>

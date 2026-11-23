@@ -127,3 +127,6 @@ textarea.q-input { resize: vertical; }
 .q-notice-tick { align-items: flex-start; }
 .q-notice-tick input { margin-top: 3px; }
 .ink.chk.pending { outline: 1px dotted var(--oxblood); outline-offset: -1px; }
+
+.savebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
+.savebar .fine { margin: 0; }
