@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { APPS } from './apps'
 
-export function HomeFooter() {
+export function HomeFooter({ hideQuoteNote = false }: { hideQuoteNote?: boolean }) {
   return (
     <footer className="mg-foot">
       <div className="mg-foot-in">
@@ -17,7 +17,7 @@ export function HomeFooter() {
           {APPS.map(a => <Link key={a.href} href={a.href}>{a.code} <span>{a.name}</span></Link>)}
         </nav>
       </div>
-      <p className="mg-foot-note">Answering here is a request for a quote. Nothing on this site binds coverage, and signatures are never collected.</p>
+      {!hideQuoteNote && <p className="mg-foot-note">Answering here is a request for a quote. Nothing on this site binds coverage, and signatures are never collected.</p>}
     </footer>
   )
 }

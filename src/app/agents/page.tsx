@@ -29,7 +29,7 @@ export default function Agents() {
           <AgentSignup />
         </section>
       </main>
-      <HomeFooter />
+      <HomeFooter hideQuoteNote />
     </div>
   )
 }
