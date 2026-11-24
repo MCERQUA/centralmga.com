@@ -7,6 +7,10 @@ import { computeItems, widgetsFor } from '@/lib/overlay'
 import { FORM_NAME, LEADS_WEBHOOK_URL, NETLIFY_FALLBACK, ROUTES, SITE, STORAGE_KEY, type RouteKey } from '@/lib/config'
 import { TODO_140 } from '@/lib/todo140'
 import { PropertySection, propertyFilter } from '@/components/PropertySection'
+import { PdfDrop, type DropOutcome } from '@/components/PdfDrop'
+import { prefill125, isAcord125Family } from '@/lib/prefill125'
+import { markPrefilled, unmarkOnEdit } from '@/lib/prefillMarks'
+import type { PdfRead } from '@/lib/pdfRead'
 
 type Flat = Record<string, string>
 const CONNECTED = LEADS_WEBHOOK_URL !== ''
@@ -30,6 +34,9 @@ export function SplitApp({ route }: { route: RouteKey }) {
   const nameEdited = useRef(false) // 126/140 only: the user typed their own name here, so never overwrite it
   const chan = useRef<BroadcastChannel | null>(null)
   const latest = useRef<Flat>({})
+  const leftRef = useRef<HTMLElement>(null)
+  const noPersist = useRef(false)          // set by a PDF drop: prefilled answers are never written to storage or broadcast to other tabs
+  const marks = useRef<string[]>([])
 
   // carry answers across the three routes (tab-scoped sessionStorage; cleared when the tab closes or after a successful send)
   useEffect(() => {
@@ -42,14 +49,14 @@ export function SplitApp({ route }: { route: RouteKey }) {
   const onValues = useCallback((v: Flat) => {
     setVals(v)
     // live applicant name: the 125 announces its business name; the 126 and 140 (below) adopt it unless the user typed their own here
-    if (loaded.current) {
+    if (loaded.current && !noPersist.current) {
       const nm = v.businessName ?? ''
       if (nm !== lastName.current) {
         if (nm !== extName.current) { if (route !== '125') nameEdited.current = true; try { chan.current?.postMessage({ businessName: nm }) } catch { /* ignore */ } }
         lastName.current = nm
       }
     }
-    if (!loaded.current) return
+    if (!loaded.current || noPersist.current) return
     try {
       const keep = Object.fromEntries(Object.entries(v).filter(([, x]) => x !== '' && x !== undefined))
       if (Object.keys(keep).length > 1) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(keep)); else sessionStorage.removeItem(STORAGE_KEY)
@@ -76,9 +83,22 @@ export function SplitApp({ route }: { route: RouteKey }) {
     window.addEventListener('focus', again); document.addEventListener('visibilitychange', again); window.addEventListener('pageshow', again); document.addEventListener('focusout', later)
     return () => { ch.close(); chan.current = null; window.removeEventListener('focus', again); document.removeEventListener('visibilitychange', again); window.removeEventListener('pageshow', again); document.removeEventListener('focusout', later) }
   }, [route])
+  useEffect(() => unmarkOnEdit(leftRef.current), [])
+  useEffect(() => { if (marks.current.length) markPrefilled(leftRef.current, marks.current) }, [restore.key])
   useEffect(() => { setPage(R.pages[0]) }, [route]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = useMemo(() => computeItems(vals), [vals])
+
+  const runDrop = (r: PdfRead): DropOutcome => {
+    const p = prefill125(r)
+    if (!p.count) return { count: 0, unmatched: p.unmatched, ambiguous: p.ambiguous }
+    noPersist.current = true
+    const d = { ...latest.current, ...p.values }
+    extName.current = lastName.current = d.businessName ?? ''
+    marks.current = Object.keys(p.values)
+    setRestore(x => ({ key: x.key + 1, defaults: d })); setVals(d)
+    return { count: p.count, unmatched: p.unmatched, ambiguous: p.ambiguous }
+  }
 
   // focusing a left field jumps the right pane to the page that field prints on (when that page belongs to this route)
   const onFocus = (e: React.FocusEvent<HTMLDivElement>) => {
@@ -109,7 +129,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
         </nav>
       </header>
       <div className="cols">
-        <section className="left" onFocusCapture={onFocus} aria-label="Questionnaire">
+        <section className="left" ref={leftRef} onFocusCapture={onFocus} aria-label="Questionnaire">
           <a className="jump" href="#preview">Jump to the form preview</a>
           <div className="lead">
             <h1>{R.title}: {R.sub}</h1>
@@ -121,6 +141,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
                 <ul>{TODO_140.map(t => <li key={t}>{t}</li>)}</ul>
               </aside>
             )}
+            <PdfDrop formName="ACORD 125/126/140" recognise={isAcord125Family} run={runDrop} />
             {!CONNECTED && (
               <aside className="notconn" role="status" data-testid="not-connected">
                 <b>Not connected.</b> This build has no leads endpoint configured, so pressing the button validates your answers but sends nothing.

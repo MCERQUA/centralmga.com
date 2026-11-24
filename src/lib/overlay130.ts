@@ -8,11 +8,11 @@ const M = map as unknown as { rects: Record<string, { page: number; rect: number
 type Kind = 'raw' | 'date' | 'code' | 'statename' | 'yn' | 'inc'
 type Tgt = { leaf: string; kind: Kind; onlyInc?: boolean }
 const L = 'ABCDEFGHIJKLMN'
-const ENT: Record<string, string> = { 'Sole proprietor': 'SoleProprietor', Partnership: 'Partnership', Corporation: 'Corporation', 'Subchapter S Corporation': 'SubchapterSCorporation',
+export const ENT: Record<string, string> = { 'Sole proprietor': 'SoleProprietor', Partnership: 'Partnership', Corporation: 'Corporation', 'Subchapter S Corporation': 'SubchapterSCorporation',
   'Limited Liability Corporation': 'LimitedLiabilityCorporation', 'Joint venture': 'JointVenture', Trust: 'Trust', 'Unincorporated association': 'UnincorporatedAssociation' }
-const entLeaf = (k: string) => `NamedInsured_LegalEntity_${k}Indicator_A[0]`
+export const entLeaf = (k: string) => `NamedInsured_LegalEntity_${k}Indicator_A[0]`
 
-const T: Record<string, Tgt[]> = {}
+export const T: Record<string, Tgt[]> = {}
 const add = (name: string, leaf: string, kind: Kind = 'raw', onlyInc = false) => { (T[name] ??= []).push({ leaf, kind, onlyInc }) }
 const SINGLE: Record<string, string> = {
   businessName: 'NamedInsured_FullName_A[0]', phone: 'NamedInsured_Primary_PhoneNumber_A[0]', secondaryPhone: 'NamedInsured_Secondary_PhoneNumber_A[0]',
@@ -54,16 +54,16 @@ for (let n = 1; n <= MAX_PRIOR; n++) {
   add(k.mod, `PriorCoverage_ModificationFactor_${l}[0]`); add(k.claims, `LossHistory_ClaimCount_${l}[0]`); add(k.paid, `LossHistory_PaidAmount_${l}[0]`); add(k.res, `LossHistory_ReservedAmount_${l}[0]`)
 }
 for (const q of YN_130) { add(`yn_${q.key}`, M.yn[q.key], 'yn'); add(`ynExplain_${q.key}`, M.expl[q.key]) }
-const BOX: Record<string, string> = { wcCoverageUSLH: 'WorkersCompensation_Coverage_USLHIndicator_A[0]', wcCoverageVoluntaryComp: 'WorkersCompensation_Coverage_VoluntaryCompensationIndicator_A[0]',
+export const BOX: Record<string, string> = { wcCoverageUSLH: 'WorkersCompensation_Coverage_USLHIndicator_A[0]', wcCoverageVoluntaryComp: 'WorkersCompensation_Coverage_VoluntaryCompensationIndicator_A[0]',
   wcCoverageForeign: 'WorkersCompensation_Coverage_ForeignCoverageIndicator_A[0]', wcCoverageManagedCare: 'WorkersCompensation_Coverage_ManagedCareOptionIndicator_A[0]',
   wcDeductibleMedical: 'WorkersCompensation_DeductibleType_MedicalIndicator_A[0]', wcDeductibleIndemnity: 'WorkersCompensation_DeductibleType_IndemnityIndicator_A[0]',
   wcCoverageOther: 'WorkersCompensation_Coverage_OtherIndicator_A[0]', wcDeductibleOther: 'WorkersCompensation_DeductibleType_OtherIndicator_A[0]',
   lossRunsAttached: 'WorkersCompensationLineOfBusiness_Attachment_LossRunIndicator_A[0]', informationPracticesNotice: 'Policy_InformationPracticesNoticeIndicator_A[0]' }
 /** Keys posted by the form that the real map_acord130.py (site_to_intake) does NOT yet read (verified by probe, see build report). Drawn with a dotted underline so the preview never claims more than the mapper writes. */
 export const PENDING_130 = new Set(['wcDeductibleOther', 'lossRunsAttached', 'informationPracticesNotice', 'wcCoverageOtherDescription', 'wcDeductibleOtherDescription', 'inspectionContactEmail', 'workFromHomeCount', 'travelStates'])
-const PEND_TEXT: Record<string, string> = { wcCoverageOtherDescription: 'WorkersCompensation_Coverage_OtherDescription_A[0]', wcDeductibleOtherDescription: 'WorkersCompensation_DeductibleType_OtherDescription_A[0]',
+export const PEND_TEXT: Record<string, string> = { wcCoverageOtherDescription: 'WorkersCompensation_Coverage_OtherDescription_A[0]', wcDeductibleOtherDescription: 'WorkersCompensation_DeductibleType_OtherDescription_A[0]',
   inspectionContactEmail: 'NamedInsured_InspectionContact_EmailAddress_A[0]', workFromHomeCount: 'WorkersCompensationLineOfBusiness_Question_AtHomeEmployeeCount_A[0]' }
-const travelLeaf = (i: number) => `WorkersCompensation_PartThree_StateOrProvinceCode_${L[i]}[0]`
+export const travelLeaf = (i: number) => `WorkersCompensation_PartThree_StateOrProvinceCode_${L[i]}[0]`
 void COVER_130; void ENTITY_130
 
 const mdY = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? `${m[2]}/${m[3]}/${m[1]}` : v }

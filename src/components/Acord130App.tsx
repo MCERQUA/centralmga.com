@@ -3,6 +3,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AcordPane } from '@/components/AcordPane'
+import { PdfDrop, type DropOutcome } from '@/components/PdfDrop'
+import { prefill130, isAcord130 } from '@/lib/prefill130'
+import { markPrefilled, unmarkOnEdit } from '@/lib/prefillMarks'
+import type { PdfRead } from '@/lib/pdfRead'
 import { computeItems130, widgets130 } from '@/lib/overlay130'
 import { LEADS_WEBHOOK_URL, NETLIFY_FALLBACK, ROUTES, SITE, type RouteKey } from '@/lib/config'
 import {
@@ -25,13 +29,16 @@ export function Acord130App() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const loaded = useRef(false)
+  const leftRef = useRef<HTMLElement>(null)
+  const noPersist = useRef(false)   // set by a PDF drop: prefilled answers are never written to storage
+  const [marks, setMarks] = useState<string[]>([])
 
   useEffect(() => {
     try { const s = sessionStorage.getItem(STORAGE_130); if (s) { const d = JSON.parse(s); setV(d.v ?? {}); setCounts(d.counts ?? { owners: 1, classes: 1, prior: 1 }) } } catch { /* ignore */ }
     loaded.current = true
   }, [])
   useEffect(() => {
-    if (!loaded.current) return
+    if (!loaded.current || noPersist.current) return
     try {
       const keep = Object.fromEntries(Object.entries(v).filter(([k, x]) => x !== '' && !NOSTORE.test(k)))
       if (Object.keys(keep).length) sessionStorage.setItem(STORAGE_130, JSON.stringify({ v: keep, counts })); else sessionStorage.removeItem(STORAGE_130)
@@ -41,6 +48,18 @@ export function Acord130App() {
   const errors = useMemo(() => validate130(v, counts), [v, counts])
   const payload = useMemo(() => buildPayload130(v, counts, SITE), [v, counts])
   const items = useMemo(() => computeItems130(payload), [payload])
+
+  useEffect(() => unmarkOnEdit(leftRef.current), [])
+  useEffect(() => { if (marks.length) markPrefilled(leftRef.current, marks) }, [marks])
+  const runDrop = (r: PdfRead): DropOutcome => {
+    const p = prefill130(r)
+    if (!p.count) return { count: 0, unmatched: p.unmatched, ambiguous: p.ambiguous }
+    noPersist.current = true
+    setStatus('idle'); setV(prev => ({ ...prev, ...p.values }))
+    setCounts(c => ({ owners: Math.max(c.owners, p.counts.owners), classes: Math.max(c.classes, p.counts.classes), prior: Math.max(c.prior, p.counts.prior) }))
+    setMarks(Object.keys(p.values))
+    return { count: p.count, unmatched: p.unmatched, ambiguous: p.ambiguous }
+  }
 
   const set = useCallback((name: string, val: string) => {
     setStatus('idle')
@@ -212,12 +231,13 @@ export function Acord130App() {
         </nav>
       </header>
       <div className="cols">
-        <section className="left" onFocusCapture={onFocus} aria-label="Questionnaire">
+        <section className="left" ref={leftRef} onFocusCapture={onFocus} aria-label="Questionnaire">
           <a className="jump" href="#preview">Jump to the form preview</a>
           <div className="lead">
             <h1>ACORD 130: Workers compensation application</h1>
             <p>Answer in plain language on this side. The matching page of the real ACORD 130 fills in on the right as you type. Fields marked * are needed to complete the application.
               We never ask for signatures, Social Security numbers or policy numbers.</p>
+            <PdfDrop formName="ACORD 130" recognise={isAcord130} run={runDrop} />
             {!CONNECTED && <aside className="notconn" role="status" data-testid="not-connected"><b>Not connected.</b> This build has no leads endpoint configured, so pressing the button validates your answers but sends nothing.</aside>}
           </div>
           <form name={FORM_NAME_130} method="POST" data-netlify="true" data-netlify-honeypot="bot-field" noValidate onSubmit={submit} className="q-form">
