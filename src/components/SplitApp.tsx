@@ -27,7 +27,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
   const loaded = useRef(false)
   const lastName = useRef('')   // last business name seen in this page's form
   const extName = useRef('')    // last name that arrived from another page (not typed here)
-  const nameEdited = useRef(false) // 126 only: the user typed their own name here, so never overwrite it
+  const nameEdited = useRef(false) // 126/140 only: the user typed their own name here, so never overwrite it
   const chan = useRef<BroadcastChannel | null>(null)
   const latest = useRef<Flat>({})
 
@@ -41,11 +41,11 @@ export function SplitApp({ route }: { route: RouteKey }) {
   }, [])
   const onValues = useCallback((v: Flat) => {
     setVals(v)
-    // live applicant name: the 125 announces its business name; the 126 (below) adopts it unless the user typed their own here
+    // live applicant name: the 125 announces its business name; the 126 and 140 (below) adopt it unless the user typed their own here
     if (loaded.current) {
       const nm = v.businessName ?? ''
       if (nm !== lastName.current) {
-        if (nm !== extName.current) { if (route === '126') nameEdited.current = true; try { chan.current?.postMessage({ businessName: nm }) } catch { /* ignore */ } }
+        if (nm !== extName.current) { if (route !== '125') nameEdited.current = true; try { chan.current?.postMessage({ businessName: nm }) } catch { /* ignore */ } }
         lastName.current = nm
       }
     }
@@ -61,7 +61,7 @@ export function SplitApp({ route }: { route: RouteKey }) {
     const ch = new BroadcastChannel('cmga-acord-name'); chan.current = ch
     let pending: string | null = null
     const apply = () => {
-      if (pending === null || route !== '126' || nameEdited.current) { if (route !== '126' || nameEdited.current) pending = null; return }
+      if (pending === null || route === '125' || nameEdited.current) { pending = null; return }
       const a = document.activeElement as HTMLElement | null
       if (a && a.closest('.left') && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return // never remount under the user's cursor; retried on blur/focus
       const nm = pending; pending = null
