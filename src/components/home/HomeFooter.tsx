@@ -8,8 +8,10 @@ export function HomeFooter() {
         <div>
           <p className="mg-foot-brand">Central MGA</p>
           <p>A managing general agent: an insurance intermediary working between carriers and retail agents.</p>
+          <p className="mg-50">Available in all 50 states.</p>
         </div>
         <nav aria-label="Applications">
+          <Link href="/acord-apps">Acord Apps</Link>
           {APPS.map(a => <Link key={a.href} href={a.href}>{a.code} <span>{a.name}</span></Link>)}
         </nav>
       </div>

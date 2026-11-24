@@ -1,12 +1,13 @@
 import Link from 'next/link'
-import { APPS } from './apps'
 
-export function HomeHeader() {
+export function HomeHeader({ current }: { current?: 'home' | 'apps' }) {
   return (
     <header className="topbar">
-      <Link href="/" className="brand" aria-current="page"><b>Central MGA</b><span>Managing general agent</span></Link>
-      <nav aria-label="Applications">
-        {APPS.map(a => <Link key={a.href} href={a.href}>{a.code}</Link>)}
+      <Link href="/" className="brand" aria-current={current === 'home' ? 'page' : undefined}><b>Central MGA</b><span>Managing general agent</span></Link>
+      <nav aria-label="Main">
+        <Link href="/acord-apps" className={current === 'apps' ? 'on' : undefined} aria-current={current === 'apps' ? 'page' : undefined}>Acord Apps</Link>
+        <Link href="/#surety">Surety Bonds</Link>
+        <Link href="/#faq">FAQ</Link>
       </nav>
     </header>
   )

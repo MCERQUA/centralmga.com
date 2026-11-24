@@ -2,6 +2,7 @@ import { HomeHeader } from '@/components/home/HomeHeader'
 import { Hero } from '@/components/home/Hero'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhatWeDo } from '@/components/home/WhatWeDo'
+import { Surety } from '@/components/home/Surety'
 import { SubmitRisk } from '@/components/home/SubmitRisk'
 import { Faq, FAQ } from '@/components/home/Faq'
 import { HomeFooter } from '@/components/home/HomeFooter'
@@ -12,7 +13,7 @@ const SCHEMA = [
     '@type': 'InsuranceAgency',
     name: 'Central MGA',
     url: 'https://centralmga.com/',
-    description: 'Central MGA is a managing general agent: an insurance intermediary that works between insurance carriers and retail agents.',
+    description: 'Central MGA is a managing general agent: an insurance intermediary that works between insurance carriers and retail agents. Surety bond programs. Available in all 50 states.',
   },
   {
     '@context': 'https://schema.org',
@@ -29,6 +30,7 @@ export default function Home() {
         <Hero />
         <HowItWorks />
         <WhatWeDo />
+        <Surety />
         <SubmitRisk />
         <Faq />
       </main>

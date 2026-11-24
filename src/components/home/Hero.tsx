@@ -2,11 +2,11 @@ export function Hero() {
   return (
     <section className="mg-hero" aria-labelledby="mg-h1">
       <div className="mg-hero-copy">
-        <p className="kicker">Insurance intermediary</p>
+        <p className="kicker">Insurance intermediary &middot; Available in all 50 states</p>
         <h1 id="mg-h1">Central MGA is a Managing General Agent.</h1>
-        <p className="mg-lede">We sit between insurance carriers and retail agents. Agents bring us the risk, we organize it for underwriting, and the carrier decides. Everything we do is built to make that handoff clear and complete.</p>
+        <p className="mg-lede">We sit between insurance carriers and retail agents. Agents bring us the risk, we organize it for underwriting, and the carrier decides. Everything we do is built to make that handoff clear and complete. Available in all 50 states.</p>
         <p className="mg-cta">
-          <a className="mg-btn" href="#submit">Submit a risk</a>
+          <a className="mg-btn" href="/acord-apps">Acord Apps</a>
           <a className="mg-link" href="#how">How an MGA works</a>
         </p>
       </div>
