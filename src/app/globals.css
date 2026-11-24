@@ -228,3 +228,11 @@ textarea.q-input { resize: vertical; }
 .mg-steps p { margin: 0; color: var(--soft); }
 .mg-steps + .mg-cta { margin-top: 28px; }
 @media (max-width: 700px) { .mg-steps li { border-left: 0; border-top: 2px solid var(--ink); } .mg-steps li:first-child { border-top: 0; } }
+
+.ag-portal { border: 2px solid var(--ink); background: var(--card); padding: 22px 24px; max-width: 720px; border-left: 8px solid var(--forest); }
+.ag-portal h2 { font: 400 24px/1.15 var(--serif); margin: 0 0 8px; max-width: none; }
+.ag-portal p { margin: 0 0 10px; color: var(--soft); }
+.ag-soon { display: inline-block; padding: 12px 20px; border: 2px dashed var(--soft); color: var(--soft); font: 600 15px var(--sans); cursor: not-allowed; }
+.ag-form { max-width: 820px; display: grid; gap: 8px; }
+.ag-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px 10px; }
+.ag-lines { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 14px; }

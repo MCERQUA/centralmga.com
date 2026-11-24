@@ -12,6 +12,7 @@ export function HomeFooter() {
         </div>
         <nav aria-label="Applications">
           <Link href="/acord-apps">Acord Apps</Link>
+          <Link href="/agents">Agents</Link>
           <Link href="/excess-and-surplus">Excess &amp; surplus lines</Link>
           {APPS.map(a => <Link key={a.href} href={a.href}>{a.code} <span>{a.name}</span></Link>)}
         </nav>
