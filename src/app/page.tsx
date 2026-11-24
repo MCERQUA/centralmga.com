@@ -2,6 +2,7 @@ import { HomeHeader } from '@/components/home/HomeHeader'
 import { Hero } from '@/components/home/Hero'
 import { HowItWorks } from '@/components/home/HowItWorks'
 import { WhatWeDo } from '@/components/home/WhatWeDo'
+import { ExcessSurplus } from '@/components/home/ExcessSurplus'
 import { Surety } from '@/components/home/Surety'
 import { SubmitRisk } from '@/components/home/SubmitRisk'
 import { Faq, FAQ } from '@/components/home/Faq'
@@ -30,6 +31,7 @@ export default function Home() {
         <Hero />
         <HowItWorks />
         <WhatWeDo />
+        <ExcessSurplus />
         <Surety />
         <SubmitRisk />
         <Faq />
