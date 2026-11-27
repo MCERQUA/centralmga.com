@@ -1,10 +1,12 @@
 'use client'
 // Compliance360. Everything happens in this browser tab: the requirements template is kept in this browser's localStorage,
-// the certificate numbers are typed in and never stored, and an optional certificate file is only previewed from a local object URL.
+// the certificate numbers are typed in and are stored only when the user presses Save (also localStorage, see Compliance360Saved),
+// and an optional certificate file is only previewed from a local object URL.
 // Nothing is sent anywhere (no fetch, no form post, no beacon).
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { HomeHeader } from '@/components/home/HomeHeader'
 import { HomeFooter } from '@/components/home/HomeFooter'
+import { Compliance360Saved } from '@/components/Compliance360Saved'
 import {
   DEFAULT_TEMPLATE, ENDORSEMENTS, LINES, TEMPLATE_KEY, emptyCoi, evaluate, parseTemplate,
   type CoiInput, type EndorsementKey, type LineKey, type Template,
@@ -71,7 +73,7 @@ export function Compliance360() {
       <main className={s.page}>
         <p className="kicker">Compliance360</p>
         <h1 className="mg-h1s">Compliance360: check subcontractor insurance against your requirements.</h1>
-        <p className="mg-sub">Compliance360 is a subcontractor insurance checker. Set the requirements once, type in what the certificate of insurance shows, and get a pass or fail for each line. Your template is remembered in this browser only. The certificate details are not stored, and nothing you enter is sent anywhere.</p>
+        <p className="mg-sub">Compliance360 is a subcontractor insurance checker. Set the requirements once, type in what the certificate of insurance shows, and get a pass or fail for each line. Your template is remembered in this browser only. Certificate details are kept only if you choose to save a subcontractor, and then only in this browser. Nothing you enter is uploaded or sent anywhere.</p>
 
         <section className={s.card} aria-labelledby="sc-tpl">
           <h2 id="sc-tpl">1. Your requirements</h2>
@@ -195,6 +197,8 @@ export function Compliance360() {
             </>
           )}
         </section>
+
+        <Compliance360Saved tpl={tpl} coi={coi} overall={result?.overall ?? 'empty'} today={today} onOpen={setCoi} />
 
         <section className={s.card} aria-labelledby="sc-rm">
           <h2 id="sc-rm">Risk management for subcontractors</h2>
